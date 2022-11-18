@@ -15,17 +15,25 @@ count : 복사할 byte 수
 
 public class RunLengthEncoding 
 {
-    private int m_result = 0;
+    public byte[] m_firstPix = new byte[3];
+    public byte[] m_secondPix = new byte[3];
+    public byte[] m_outputByte = new byte[5];
+    public ushort count = 1;
+    public int second_count = 0;
+    public int m_loopCounter = 0;
 
-    private byte[] m_firstPix = new byte[3];
-    private byte[] m_secondPix = new byte[3];
-    private int count = 0;
-    
-
-    //private BitArray m_bitArray;
-    public int Encode(byte[] data, int width, int height) 
+    public byte[] Encode(byte[] data) 
     {
-        for (int i = 0; 3 * i < data.Length; i++)
+        var f_countByte = BitConverter.GetBytes(count);
+        f_countByte.CopyTo(m_outputByte, 0);
+
+        m_firstPix[0] = data[0];
+        m_firstPix[1] = data[1];
+        m_firstPix[2] = data[2];
+
+        m_firstPix.CopyTo(m_outputByte, 2);
+
+        for (int i = 0; 3 * i < data.Length - 3; i++)
         {
 
             m_firstPix[0] = data[3 * i];
@@ -36,19 +44,41 @@ public class RunLengthEncoding
             m_secondPix[1] = data[3 * (i + 1) + 1];
             m_secondPix[2] = data[3 * (i + 1) + 2];
 
-            if (m_firstPix.Equals(m_secondPix))
+            if (m_firstPix[0] == m_secondPix[0] && m_firstPix[1] == m_secondPix[1] && m_firstPix[2] == m_secondPix[2])
             {
                 count += 1;
-                byte countByte = Convert.ToByte(count);
+                
+                //just count increase
+                var s_countByte = BitConverter.GetBytes(count);
+
+                s_countByte.CopyTo(m_outputByte, second_count * (m_outputByte.Length-5));
+
             }
             else
             {
-                count = 0;
+                count = 1;
+                second_count += 1;
+
+                var s_countByte = BitConverter.GetBytes(count);
+
+                //s_countByte.CopyTo(m_outputByte, second_count * m_outputByte.Length);
+
+                m_outputByte = AddByteArrayToArray(m_outputByte, s_countByte);
+
+                m_outputByte = AddByteArrayToArray(m_outputByte, m_secondPix);
+
+                //m_outputByte = new byte[firstoutput.Length + m_secondPix.Length];
+
+                //firstoutput.CopyTo(m_outputByte, 0);
+                //m_secondPix.CopyTo(m_outputByte, firstoutput.Length);
+
             }
-            
+
+            m_loopCounter += 1;
+
         }
 
-        return m_result;
+        return m_outputByte;
     }
 
     public byte[] AddByteArrayToArray(byte[] bArray, byte[] newByteArray)
